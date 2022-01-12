@@ -21,24 +21,26 @@ if __name__ == '__main__':
             with open(stylesheet_path, 'r') as f:
                 self.setStyleSheet(f.read())
             self.setWindowTitle("Itchification")
-            list_widget = QListView()
-            model = QStandardItemModel(list_widget)
+            self.list_widget = QListView()
+            model = QStandardItemModel(self.list_widget)
             followed_list = self.twitch.get_followed_list()
             for f in followed_list:
                 item = QStandardItem(f["display_name"])
                 model.appendRow(item)
 
-            list_widget.clicked.connect(self.on_item_changed)
-            list_widget.setModel(model)
+            self.list_widget.clicked.connect(self.on_item_changed)
+            self.list_widget.setModel(model)
             layout = QVBoxLayout()
-            layout.addWidget(list_widget)
+            layout.addWidget(self.list_widget)
             widget = QWidget()
             widget.setLayout(layout)
             self.setCentralWidget(widget)
             self.setMinimumSize(300, 800)
 
-        def on_item_changed(x):
-            print(str(x.list_widget))
+        def on_item_changed(self, index):
+            item = self.list_widget.selectedIndexes()[0]
+            print(item.model().itemFromIndex(index).text())
+
 
 
     window = MainWindow()
