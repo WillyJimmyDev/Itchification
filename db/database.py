@@ -26,18 +26,32 @@ class ItchificationDB:
                 userid VARCHAR(60) NOT NULL,
                 description TEXT(255) NOT NULL,
                 display_name VARCHAR(50) NOT NULL,
-                view_count INT NOT NULL
+                view_count INT NOT NULL,
+                UNIQUE(userid)
             );
             """
                                         ):
             print(self.dbconn.lastError().databaseText())
+        else:
+            print('created table')
 
     def check_table_exists(self):
         print(self.dbconn.tables())
-        print('followed' in self.dbconn.tables())
         if 'followed' in self.dbconn.tables():
-            pass
-            # QMessageBox.information(None, "Table exists", "Woot!")
+            return
         else:
             QMessageBox.critical(None, "Table Query Error!", "Table Not There:")
             self.create_table()
+
+    @staticmethod
+    def insert_followed(followed_list):
+        insert_query = QSqlQuery()
+
+        insert_query.prepare("INSERT OR IGNORE INTO followed (userid,description,display_name, view_count) VALUES (?, ?, ?, ?)")
+        for d in followed_list:
+            insert_query.addBindValue(d['id'])
+            insert_query.addBindValue(d['description'])
+            insert_query.addBindValue(d['display_name'])
+            insert_query.addBindValue(d['view_count'])
+
+            insert_query.exec_()

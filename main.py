@@ -1,13 +1,11 @@
 import sys
 import os
 from pathlib import Path
-
 import requests
 
 from PySide2 import QtCore, QtGui
 from PySide2.QtNetwork import QNetworkAccessManager
 from PySide2.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListView
-from db.database import ItchificationDB
 from PySide2.QtGui import QStandardItemModel, QStandardItem, QIcon
 from twitch import Twitch, WebEngineUrlRequestInterceptor
 from PySide2.QtWebEngineWidgets import QWebEngineProfile
@@ -23,7 +21,6 @@ if __name__ == '__main__':
             self.nam = QNetworkAccessManager()
 
             self.twitch = Twitch()
-            self.dbconn = ItchificationDB()
             super().__init__()
             stylesheet_path = os.path.join(os.path.dirname(__file__), 'styles/style.qss')
             with open(stylesheet_path, 'r') as f:
@@ -31,22 +28,23 @@ if __name__ == '__main__':
             self.setWindowTitle("Itchification")
             self.list_widget = QListView()
             model = QStandardItemModel(self.list_widget)
-            followed_list = self.twitch.get_followed_list()
+            followed_list = self.twitch.followed
             for f in followed_list:
                 display_name = f["display_name"]
                 image_file = 'thumbnails/' + display_name + '.jpg'
-
-                item = QStandardItem(display_name)
                 if not Path(image_file).is_file():
                     g = open(image_file, 'wb')
                     g.write(requests.get(f["profile_image_url"]).content)
                     g.close()
 
+                item = QStandardItem(display_name)
                 item.setData("https://twitch.tv/" + display_name, 257)  # 257 refers to a custom user role enum
                 item.setIcon(QIcon(image_file))
+                item.setEditable(False)
                 model.appendRow(item)
 
-            self.list_widget.clicked.connect(self.on_item_changed)
+            self.list_widget.doubleClicked.connect(self.on_item_changed)
+            self.list_widget.activated.connect(self.on_item_changed)
             self.list_widget.setModel(model)
             layout = QVBoxLayout()
             layout.addWidget(self.list_widget)
@@ -65,7 +63,6 @@ if __name__ == '__main__':
 
 
     window = MainWindow()
-    followers = window.twitch.get_followed_list()
     window.show()
 
     sys.exit(app.exec_())

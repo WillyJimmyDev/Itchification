@@ -1,17 +1,18 @@
 QListView{
 
-    background : black;
-    color: white;
+    background : white;
+    color: black;
 }
 QListView::item{
-    border : 1px solid gray;
-    background : black;
-    padding-top: 10px;
+    border-bottom : 1px solid gray;
+    background : white;
+    padding-top: 20px;
     padding-bottom:20px;
     padding-left:10px;
     outline: none;
     }
 QListView::item:selected{
-    border : 1px solid black;
-    background : gray;
+    background : white;
+    outline: none;
+    color: black;
 }

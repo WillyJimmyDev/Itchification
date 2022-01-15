@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 import requests
+from db.database import ItchificationDB
 
 
 class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -29,6 +30,9 @@ class Twitch:
 
     def __init__(self):
         self.browser = QWebEngineView()
+        self.dbconn = ItchificationDB()
+        self._followed = []
+        self.get_followed()
 
     def authenticate(self):
         self.browser.load(QUrl("https://id.twitch.tv/oauth2/authorize?client_id=" + self.twitch_client_id +
@@ -36,26 +40,30 @@ class Twitch:
                                "user:read:follows"))
         self.browser.show()
 
-    def api_request(self, endpoint):
+    def __api_request(self, endpoint):
         url = "https://api.twitch.tv/helix/" + endpoint
         headers = {"Client-ID": self.twitch_client_id,
                    "Authorization": "Bearer " + self.twitch_token}
         return requests.get(url, headers=headers)
 
-    def get_followed_list(self):
+    def get_followed(self):
         followed_list = []
-        userid = self.api_request('users').json()['data'][0]['id']
-        followed = self.api_request("users/follows?from_id=" + userid + "&first=100")
+        userid = self.__api_request('users').json()['data'][0]['id']
+        followed = self.__api_request("users/follows?from_id=" + userid + "&first=100")
         for f in followed.json()['data']:
             followed_list.append(f['to_id'])
 
-        return self.get_user_info(followed_list)
+        self.populate_followed_info(followed_list)
 
-    def get_user_info(self, follows):
-        if isinstance(follows, list):
-            query_string = "&id=".join(follows)
-            user_info = self.api_request("users?" + query_string).json()["data"]
-            return user_info
+    def populate_followed_info(self, followed_list):
+        query_string = "&id=".join(followed_list)
+        self._followed = self.__api_request("users?" + query_string).json()["data"]
+        print(self._followed)
+        self.dbconn.insert_followed(self._followed)
+
+    @property
+    def followed(self):
+        return self._followed
 
     # auth = TwitchAuthRequest()
     # auth.authenticate()
