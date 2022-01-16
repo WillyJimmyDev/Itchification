@@ -16,12 +16,12 @@ class ItchificationDB:
 
         self.check_table_exists()
 
-    def create_table(self):
+    # create 'tables' not 'table' token table with uniqye constrsaint on token field
+    def create_tables(self):
         db = self.dbconn.database()
-        create_table_query = QSqlQuery(db)
-        print('creating table')
-        if not create_table_query.exec_("""
-            CREATE TABLE followed (
+        create_followed_table = QSqlQuery(db)
+        if not create_followed_table.exec_("""
+            CREATE TABLE IF NOT EXISTS followed (
                 id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
                 userid VARCHAR(60) NOT NULL,
                 description TEXT(255) NOT NULL,
@@ -32,16 +32,25 @@ class ItchificationDB:
             """
                                         ):
             print(self.dbconn.lastError().databaseText())
-        else:
-            print('created table')
+
+        create_auth_table = QSqlQuery(db)
+        if not create_auth_table.exec_("""
+                    CREATE TABLE IF NOT EXISTS auth (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
+                        usertoken VARCHAR(60) NOT NULL,
+                        UNIQUE(usertoken)
+                    );
+                    """
+                                           ):
+            print(self.dbconn.lastError().databaseText())
 
     def check_table_exists(self):
         print(self.dbconn.tables())
-        if 'followed' in self.dbconn.tables():
+        if 'auth' in self.dbconn.tables():
             return
         else:
-            QMessageBox.critical(None, "Table Query Error!", "Table Not There:")
-            self.create_table()
+            QMessageBox.critical(None, "Tables Query Error!", "Tables Not There:")
+            self.create_tables()
 
     @staticmethod
     def insert_followed(followed_list):
