@@ -48,9 +48,8 @@ class ItchificationDB:
         print(self.dbconn.tables())
         if 'auth' in self.dbconn.tables():
             return
-        else:
-            QMessageBox.critical(None, "Tables Query Error!", "Tables Not There:")
-            self.create_tables()
+        QMessageBox.critical(None, "Tables Query Error!", "Tables Not There:")
+        self.create_tables()
 
     @staticmethod
     def insert_followed(followed_list):

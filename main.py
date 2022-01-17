@@ -33,18 +33,15 @@ if __name__ == '__main__':
                 display_name = f["display_name"]
                 image_file = 'thumbnails/' + display_name + '.jpg'
                 if not Path(image_file).is_file():
-                    g = open(image_file, 'wb')
-                    g.write(requests.get(f["profile_image_url"]).content)
-                    g.close()
-
+                    with open(image_file, 'wb') as g:
+                        g.write(requests.get(f["profile_image_url"]).content)
                 item = QStandardItem(display_name)
                 item.setData("https://twitch.tv/" + display_name, 257)  # 257 refers to a custom user role enum
                 item.setIcon(QIcon(image_file))
                 item.setEditable(False)
                 model.appendRow(item)
 
-            self.list_widget.doubleClicked.connect(self.on_item_changed)
-            self.list_widget.activated.connect(self.on_item_changed)
+            self.list_widget.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
             self.list_widget.setModel(model)
             layout = QVBoxLayout()
             layout.addWidget(self.list_widget)
@@ -55,7 +52,7 @@ if __name__ == '__main__':
 
         @staticmethod
         def on_item_changed(index):
-            print(index.model().itemFromIndex(index).text())
+            # print(index.model().itemFromIndex(index).text())
             url = index.model().itemFromIndex(index).data()
             channel_link = QtCore.QUrl(url)
             if not QtGui.QDesktopServices.openUrl(channel_link):

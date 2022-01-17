@@ -47,12 +47,9 @@ class Twitch:
         return requests.get(url, headers=headers)
 
     def get_followed(self):
-        followed_list = []
         userid = self.__api_request('users').json()['data'][0]['id']
         followed = self.__api_request("users/follows?from_id=" + userid + "&first=100")
-        for f in followed.json()['data']:
-            followed_list.append(f['to_id'])
-
+        followed_list = [f['to_id'] for f in followed.json()['data']]
         self.populate_followed_info(followed_list)
 
     def populate_followed_info(self, followed_list):
