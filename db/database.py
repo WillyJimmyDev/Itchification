@@ -10,13 +10,11 @@ class ItchificationDB:
         self.dbconn.setDatabaseName("itchification.sqlite")
 
         if not self.dbconn.open():
-            QMessageBox.critical(None, "App Name - Error!",
-                                 "Database Error: %s" % self.dbconn.lastError().databaseText())
+            QMessageBox.critical(None, "App Name - Error!","Database Error: %s" % self.dbconn.lastError().databaseText())
             sys.exit(1)
 
         self.check_table_exists()
 
-    # create 'tables' not 'table' token table with uniqye constrsaint on token field
     def create_tables(self):
         db = self.dbconn.database()
         create_followed_table = QSqlQuery(db)
@@ -29,8 +27,7 @@ class ItchificationDB:
                 view_count INT NOT NULL,
                 UNIQUE(userid)
             );
-            """
-                                        ):
+            """):
             print(self.dbconn.lastError().databaseText())
 
         create_auth_table = QSqlQuery(db)
@@ -40,15 +37,14 @@ class ItchificationDB:
                         usertoken VARCHAR(60) NOT NULL,
                         UNIQUE(usertoken)
                     );
-                    """
-                                           ):
+                    """):
             print(self.dbconn.lastError().databaseText())
 
     def check_table_exists(self):
-        print(self.dbconn.tables())
+        # print(self.dbconn.tables())
         if 'auth' in self.dbconn.tables():
             return
-        QMessageBox.critical(None, "Tables Query Error!", "Tables Not There:")
+        # QMessageBox.critical(None, "Tables Query Error!", "Tables Not There:")
         self.create_tables()
 
     @staticmethod
@@ -63,3 +59,11 @@ class ItchificationDB:
             insert_query.addBindValue(d['view_count'])
 
             insert_query.exec_()
+
+    @staticmethod
+    def insert_token(token):
+        insert_query = QSqlQuery()
+        insert_query.prepare("INSERT OR IGNORE INTO auth (usertoken) VALUES (?)")
+        insert_query.bindValue(token)
+
+        insert_query.exec_()

@@ -1,16 +1,17 @@
+# coding=utf8
 import sys
 import os
 from pathlib import Path
 import requests
 
 from PySide2 import QtCore, QtGui
-from PySide2.QtNetwork import QNetworkAccessManager
 from PySide2.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListView
 from PySide2.QtGui import QStandardItemModel, QStandardItem, QIcon
 from twitch import Twitch, WebEngineUrlRequestInterceptor
 from PySide2.QtWebEngineWidgets import QWebEngineProfile
 
-if __name__ == '__main__':
+
+def main():
     app = QApplication([])
     interceptor = WebEngineUrlRequestInterceptor()
     QWebEngineProfile.defaultProfile().setUrlRequestInterceptor(interceptor)
@@ -18,7 +19,6 @@ if __name__ == '__main__':
     class MainWindow(QMainWindow):
 
         def __init__(self):
-            self.nam = QNetworkAccessManager()
 
             self.twitch = Twitch()
             super().__init__()
@@ -41,6 +41,7 @@ if __name__ == '__main__':
                 item.setEditable(False)
                 model.appendRow(item)
 
+            self.twitch.get_live_streams()
             self.list_widget.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
             self.list_widget.setModel(model)
             layout = QVBoxLayout()
@@ -58,8 +59,10 @@ if __name__ == '__main__':
             if not QtGui.QDesktopServices.openUrl(channel_link):
                 QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
 
-
     window = MainWindow()
     window.show()
+    app.exec_()
 
-    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    sys.exit(main())
