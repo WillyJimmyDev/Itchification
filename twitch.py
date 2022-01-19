@@ -1,13 +1,13 @@
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PySide2.QtCore import QUrl
+from PySide2.QtCore import QUrl, Signal, QObject, Slot
 import os
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 import requests
 from db.database import ItchificationDB
 from config.config import TWITCH_CLIENT_ID
-from deepdiff import DeepDiff
+import dbus
 
 
 class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -23,9 +23,11 @@ class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
             dbconn.insert_token(token)
 
 
-class Twitch:
+class Twitch(QObject):
+    _siggy = Signal()
 
     def __init__(self):
+        super().__init__()
         load_dotenv()
         self.browser = QWebEngineView()
         self.dbconn = ItchificationDB()
@@ -36,6 +38,8 @@ class Twitch:
         self._followed = []
         self.get_followed()
         self._live = []
+        self._siggy.connect(self._my_slot)
+        # self._siggy.connect(self.parent.)
 
     def authenticate(self):
         self.browser.load(QUrl("https://id.twitch.tv/oauth2/authorize?client_id=" + self.twitch_client_id +
@@ -67,28 +71,44 @@ class Twitch:
     def get_live_streams(self):
         live_streams = self.__api_request("streams/followed?user_id=" + self.user_id).json()["data"]
         # print(live_streams)
-        live = False
-        for i in self._followed:
-            for j in live_streams:
-                if i["id"] == j["user_id"]:
-                    live = True
-                    # change ui to indicate live streamer
-                    # if live stream has been added, use a desktop notifcation
-                    print('fuckinghell it works!!')
-        import dbus
-        if live:
-            item = "org.freedesktop.Notifications"
+        if not live_streams:
+            self._live.clear()
+            self._siggy.emit()
+            return
+        if not self._live: # all live streamers are new
+            self._live = live_streams
+            for i in self._live:
+                self._notify(i["user_name"],i["title"])
+        else:
+            if self._live == live_streams: # nothing has changed, move on
+                return
+            for i in live_streams:
+                if i not in self._live:
+                    self._live.append(i)
+                    self._notify(i["user_name"],i["title"])                           
 
-            notify_intf = dbus.Interface(
-                dbus.SessionBus().get_object(item, "/"+item.replace(".", "/")), item)
+    def _notify(self, username, title):
+        item = "org.freedesktop.Notifications"
 
-            notify_intf.Notify(
-                "", 0, "", "Twitch Streamer Is Live!!", "This is the notification body.",
-                [], {"urgency": 1}, 10000)
+        notify_intf = dbus.Interface(
+        dbus.SessionBus().get_object(item, "/"+item.replace(".", "/")), item)
+
+        notify_intf.Notify(
+        "", 0, "", username + " Has Just Gone Live!", title,
+        [], {"urgency": 1}, 10000)
+
+    @Slot()
+    def _my_slot(self):
+        print('slotted')
+
 
     @property
     def followed(self):
         return self._followed
+
+    @property
+    def live(self):
+        return self._live
 
     # auth = TwitchAuthRequest()
     # auth.authenticate()

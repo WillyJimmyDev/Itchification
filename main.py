@@ -9,6 +9,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, Q
 from PySide2.QtGui import QStandardItemModel, QStandardItem, QIcon
 from twitch import Twitch, WebEngineUrlRequestInterceptor
 from PySide2.QtWebEngineWidgets import QWebEngineProfile
+from PySide2.QtCore import QUrl, Signal, QObject, Slot
 
 
 def main():
@@ -16,17 +17,17 @@ def main():
     interceptor = WebEngineUrlRequestInterceptor()
     QWebEngineProfile.defaultProfile().setUrlRequestInterceptor(interceptor)
 
-    class MainWindow(QMainWindow):
+    class MainWindow(QMainWindow, QtCore.QObject):
+        twitch = Twitch()
+        list_widget = QListView()
 
         def __init__(self):
 
-            self.twitch = Twitch()
             super().__init__()
             stylesheet_path = os.path.join(os.path.dirname(__file__), 'styles/style.qss')
             with open(stylesheet_path, 'r') as f:
                 self.setStyleSheet(f.read())
             self.setWindowTitle("Itchification")
-            self.list_widget = QListView()
             model = QStandardItemModel(self.list_widget)
             followed_list = self.twitch.followed
             for f in followed_list:
@@ -58,6 +59,10 @@ def main():
             channel_link = QtCore.QUrl(url)
             if not QtGui.QDesktopServices.openUrl(channel_link):
                 QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
+
+        @Slot()
+        def updated_followed():
+            print("hello")
 
     window = MainWindow()
     window.show()
