@@ -19,7 +19,7 @@ def main():
 
     class MainWindow(QMainWindow, QtCore.QObject):
         twitch = Twitch()
-        list_widget = QListView()
+        list_view = QListView()
 
         def __init__(self):
 
@@ -28,7 +28,8 @@ def main():
             with open(stylesheet_path, 'r') as f:
                 self.setStyleSheet(f.read())
             self.setWindowTitle("Itchification")
-            model = QStandardItemModel(self.list_widget)
+            self.twitch.siggy.connect(self._my_slot)
+            model = QStandardItemModel(self.list_view)
             followed_list = self.twitch.followed
             for f in followed_list:
                 display_name = f["display_name"]
@@ -43,10 +44,11 @@ def main():
                 model.appendRow(item)
 
             self.twitch.get_live_streams()
-            self.list_widget.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
-            self.list_widget.setModel(model)
+            self.list_view.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
+            self.list_view.setModel(model)
+        
             layout = QVBoxLayout()
-            layout.addWidget(self.list_widget)
+            layout.addWidget(self.list_view)
             widget = QWidget()
             widget.setLayout(layout)
             self.setCentralWidget(widget)
@@ -63,6 +65,10 @@ def main():
         @Slot()
         def updated_followed():
             print("hello")
+
+        @Slot()
+        def _my_slot(self):
+            print('new live streamer from main.py')
 
     window = MainWindow()
     window.show()

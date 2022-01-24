@@ -24,7 +24,7 @@ class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
 
 
 class Twitch(QObject):
-    _siggy = Signal()
+    siggy = Signal()
 
     def __init__(self):
         super().__init__()
@@ -38,8 +38,7 @@ class Twitch(QObject):
         self._followed = []
         self.get_followed()
         self._live = []
-        self._siggy.connect(self._my_slot)
-        # self._siggy.connect(self.parent.)
+        self.siggy.connect(self._my_slot)
 
     def authenticate(self):
         self.browser.load(QUrl("https://id.twitch.tv/oauth2/authorize?client_id=" + self.twitch_client_id +
@@ -73,10 +72,10 @@ class Twitch(QObject):
         # print(live_streams)
         if not live_streams:
             self._live.clear()
-            self._siggy.emit()
             return
         if not self._live: # all live streamers are new
             self._live = live_streams
+            self.siggy.emit()
             for i in self._live:
                 self._notify(i["user_name"],i["title"])
         else:
@@ -84,6 +83,7 @@ class Twitch(QObject):
                 return
             for i in live_streams:
                 if i not in self._live:
+                    self.siggy.emit()
                     self._live.append(i)
                     self._notify(i["user_name"],i["title"])                           
 
@@ -99,7 +99,7 @@ class Twitch(QObject):
 
     @Slot()
     def _my_slot(self):
-        print('slotted')
+        print('new live streamer')
 
 
     @property
@@ -109,6 +109,7 @@ class Twitch(QObject):
     @property
     def live(self):
         return self._live
+
 
     # auth = TwitchAuthRequest()
     # auth.authenticate()
