@@ -4,13 +4,14 @@ from config.config import TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE
 class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
 
     def sizeHint(self, option, index):
-        return QtCore.QSize(50, 50)
+        return QtCore.QSize(60, 60)
 
     def paint(self, painter, option, index):
         super(StyledItemDelegate, self).paint(painter, option, index)
         title = index.data(TITLE_ROLE)
         description = index.data(DESCRIPTION_ROLE)
         icon = index.data(ICON_ROLE)
+        # TODO need to add custom role for url
 
         mode = QtGui.QIcon.Normal
         # if not (option.state & QtWidgets.QStyle.State_Enabled):
@@ -20,20 +21,20 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
 
         state = (
             QtGui.QIcon.On
-            # if option.state & QtWidgets.QStyle.State_Open
-            # else QtGui.QIcon.Off
+            if option.state & QtWidgets.QStyle.State_Open
+            else QtGui.QIcon.Off
         )
         iconRect = QtCore.QRect(option.rect)
-        iconRect.setSize(QtCore.QSize(40, 40))
+        iconRect.setSize(QtCore.QSize(60, 60))
         icon.paint(
             painter, iconRect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, mode, state
         )
 
         titleFont = QtGui.QFont(option.font)
-        titleFont.setPixelSize(20)
+        titleFont.setPixelSize(16)
         fm = QtGui.QFontMetrics(titleFont)
         titleRect = QtCore.QRect(option.rect)
-        titleRect.setLeft(iconRect.right())
+        titleRect.setLeft(iconRect.right() + 10)
         titleRect.setHeight(fm.height())
 
         color = (
@@ -51,7 +52,7 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.restore()
 
         descriptionFont = QtGui.QFont(option.font)
-        descriptionFont.setPixelSize(15)
+        descriptionFont.setPixelSize(14)
         fm = QtGui.QFontMetrics(descriptionFont)
         descriptionRect = QtCore.QRect(option.rect)
         descriptionRect.setTopLeft(titleRect.bottomLeft())

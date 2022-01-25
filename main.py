@@ -1,15 +1,17 @@
 # coding=utf8
 import sys
 import os
-from pathlib import Path
 import requests
 
 from PySide2 import QtCore, QtGui
-from PySide2.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListView
-from PySide2.QtGui import QStandardItemModel, QStandardItem, QIcon
+from PySide2.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QListView, QAbstractItemView
+from PySide2.QtGui import QStandardItemModel
 from twitch import Twitch, WebEngineUrlRequestInterceptor
 from PySide2.QtWebEngineWidgets import QWebEngineProfile
-from PySide2.QtCore import QUrl, Signal, QObject, Slot
+from PySide2.QtCore import Slot
+
+from widgets.followed_item import FollowedItem
+from widgets.styled_item_delegate import StyledItemDelegate
 
 
 def main():
@@ -19,7 +21,9 @@ def main():
 
     class MainWindow(QMainWindow, QtCore.QObject):
         twitch = Twitch()
-        list_view = QListView()
+        list_view = QListView(
+            editTriggers=QAbstractItemView.NoEditTriggers
+        )
 
         def __init__(self):
 
@@ -31,20 +35,21 @@ def main():
             self.twitch.siggy.connect(self._my_slot)
             model = QStandardItemModel(self.list_view)
             followed_list = self.twitch.followed
-            for f in followed_list:
-                display_name = f["display_name"]
-                image_file = 'thumbnails/' + display_name + '.jpg'
-                if not Path(image_file).is_file():
+            for r in followed_list:
+                image_file = 'thumbnails/' + r['display_name'] + '.jpg'
+                print(QtCore.QFile.exists(image_file))
+                if not QtCore.QFile.exists(image_file):
                     with open(image_file, 'wb') as g:
-                        g.write(requests.get(f["profile_image_url"]).content)
-                item = QStandardItem(display_name)
-                item.setData("https://twitch.tv/" + display_name, 257)  # 257 refers to a custom user role enum
-                item.setIcon(QIcon(image_file))
-                item.setEditable(False)
-                model.appendRow(item)
+                        g.write(requests.get(r["profile_image_url"]).content)
+
+                # TODO add url parameter in function call
+                it = FollowedItem(title=r['display_name'], description=r['description'], icon=QtGui.QIcon(image_file),)
+                model.appendRow(it)
 
             self.twitch.get_live_streams()
-            self.list_view.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
+            self.list_view.setSpacing(5)
+            self.list_view.activated.connect(self.on_clicky)  # .activated is sent when doubleclicked or enter key pressed
+            self.list_view.setItemDelegate(StyledItemDelegate(self.list_view))
             self.list_view.setModel(model)
         
             layout = QVBoxLayout()
@@ -56,15 +61,21 @@ def main():
 
         @staticmethod
         def on_item_changed(index):
-            # print(index.model().itemFromIndex(index).text())
-            url = index.model().itemFromIndex(index).data()
-            channel_link = QtCore.QUrl(url)
-            if not QtGui.QDesktopServices.openUrl(channel_link):
-                QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
-
-        @Slot()
-        def updated_followed():
-            print("hello")
+            # url = index.model().itemFromIndex(index).data()
+            # channel_link = QtCore.QUrl(url)
+            # if not QtGui.QDesktopServices.openUrl(channel_link):
+            #     QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
+            it = index.model.itemFromIndex(index)
+            if it is None:
+                return
+            print("clicked:", it.title, it.description)
+    
+        @QtCore.Slot(QtCore.QModelIndex)
+        def on_clicky(self, index):
+            it = index.model().itemFromIndex(index)
+            if it is None:
+                return
+            print("clicked:", it.title, it.description)
 
         @Slot()
         def _my_slot(self):

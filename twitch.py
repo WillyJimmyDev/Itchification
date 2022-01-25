@@ -42,14 +42,14 @@ class Twitch(QObject):
 
     def authenticate(self):
         self.browser.load(QUrl("https://id.twitch.tv/oauth2/authorize?client_id=" + self.twitch_client_id +
-                               "&redirect_uri=http://localhost&response_type=token+id_token&scope=openid "
-                               "user:read:follows"))
+                            "&redirect_uri=http://localhost&response_type=token+id_token&scope=openid "
+                            "user:read:follows"))
         self.browser.show()
 
     def __api_request(self, endpoint):
         url = "https://api.twitch.tv/helix/" + endpoint
         headers = {"Client-ID": self.twitch_client_id,
-                   "Authorization": "Bearer " + self.twitch_token}
+            "Authorization": "Bearer " + self.twitch_token}
         return requests.get(url, headers=headers)
 
     def get_followed(self):

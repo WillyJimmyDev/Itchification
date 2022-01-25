@@ -7,6 +7,7 @@ class FollowedItem(QtGui.QStandardItem):
         self.title = title
         self.description = description
         self.icon = icon
+        # TOD add url property setters and getters and parameter in __init__ method
 
     @property
     def title(self):
