@@ -42,13 +42,13 @@ def main():
                     with open(image_file, 'wb') as g:
                         g.write(requests.get(r["profile_image_url"]).content)
 
-                # TODO add url parameter in function call
-                it = FollowedItem(title=r['display_name'], description=r['description'], icon=QtGui.QIcon(image_file),)
+                channel_url = 'https://twitch.tv/' + r['login']
+                it = FollowedItem(title=r['display_name'], description=r['description'], icon=QtGui.QIcon(image_file),url=channel_url)
                 model.appendRow(it)
 
             self.twitch.get_live_streams()
             self.list_view.setSpacing(5)
-            self.list_view.activated.connect(self.on_clicky)  # .activated is sent when doubleclicked or enter key pressed
+            self.list_view.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
             self.list_view.setItemDelegate(StyledItemDelegate(self.list_view))
             self.list_view.setModel(model)
         
@@ -59,23 +59,15 @@ def main():
             self.setCentralWidget(widget)
             self.setMinimumSize(300, 800)
 
-        @staticmethod
-        def on_item_changed(index):
-            # url = index.model().itemFromIndex(index).data()
-            # channel_link = QtCore.QUrl(url)
-            # if not QtGui.QDesktopServices.openUrl(channel_link):
-            #     QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
-            it = index.model.itemFromIndex(index)
-            if it is None:
-                return
-            print("clicked:", it.title, it.description)
-    
         @QtCore.Slot(QtCore.QModelIndex)
-        def on_clicky(self, index):
+        def on_item_changed(self, index):
             it = index.model().itemFromIndex(index)
             if it is None:
                 return
-            print("clicked:", it.title, it.description)
+            channel_link = QtCore.QUrl(it.url)
+            if not QtGui.QDesktopServices.openUrl(channel_link):
+                QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
+            print("clicked baby:", it.title, it.description,it.url)
 
         @Slot()
         def _my_slot(self):

@@ -1,13 +1,13 @@
 from PySide2 import QtGui
-from config.config import TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE
+from config.config import TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE, URL_ROLE
 
 class FollowedItem(QtGui.QStandardItem):
-    def __init__(self, title="", description="", icon=QtGui.QIcon()):
+    def __init__(self, title="", description="", icon=QtGui.QIcon(),url = ""):
         super(FollowedItem, self).__init__()
         self.title = title
         self.description = description
         self.icon = icon
-        # TOD add url property setters and getters and parameter in __init__ method
+        self.url = url
 
     @property
     def title(self):
@@ -32,3 +32,11 @@ class FollowedItem(QtGui.QStandardItem):
     @icon.setter
     def icon(self, icon):
         self.setData(icon, ICON_ROLE)
+
+    @property
+    def url(self):
+        return self.data(URL_ROLE)
+
+    @url.setter
+    def url(self, url):
+        self.setData(url, URL_ROLE)

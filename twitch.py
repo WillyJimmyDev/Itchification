@@ -50,7 +50,14 @@ class Twitch(QObject):
         url = "https://api.twitch.tv/helix/" + endpoint
         headers = {"Client-ID": self.twitch_client_id,
             "Authorization": "Bearer " + self.twitch_token}
-        return requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers)
+        if r.status_code == 200:
+            return r
+
+        print(r.status_code)
+        if r.status_code == 200:
+            self.authenticate()
+
 
     def get_followed(self):
         self.user_id = self.__api_request('users').json()['data'][0]['id']

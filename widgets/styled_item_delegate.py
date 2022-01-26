@@ -1,5 +1,5 @@
 from PySide2 import QtCore, QtGui, QtWidgets, os
-from config.config import TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE
+from config.config import TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE, URL_ROLE
 
 class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
 
@@ -11,7 +11,7 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         title = index.data(TITLE_ROLE)
         description = index.data(DESCRIPTION_ROLE)
         icon = index.data(ICON_ROLE)
-        # TODO need to add custom role for url
+        # url = index.data(URL_ROLE)
 
         mode = QtGui.QIcon.Normal
         # if not (option.state & QtWidgets.QStyle.State_Enabled):
