@@ -41,10 +41,8 @@ class ItchificationDB:
             print(self.dbconn.lastError().databaseText())
 
     def check_table_exists(self):
-        # print(self.dbconn.tables())
         if 'auth' in self.dbconn.tables():
             return
-        # QMessageBox.critical(None, "Tables Query Error!", "Tables Not There:")
         self.create_tables()
 
     @staticmethod
@@ -63,7 +61,14 @@ class ItchificationDB:
     @staticmethod
     def insert_token(token):
         insert_query = QSqlQuery()
-        insert_query.prepare("INSERT OR IGNORE INTO auth (usertoken) VALUES (?)")
-        insert_query.bindValue(token)
+        insert_query.prepare("INSERT OR REPLACE INTO auth (usertoken) VALUES (?)")
+        insert_query.addBindValue(token)
 
         insert_query.exec_()
+
+    def get_token(self):
+        token_query = QSqlQuery("SELECT usertoken from auth")
+
+        if token_query.exec_() and token_query.last():
+            return token_query.value(0)
+        return False
