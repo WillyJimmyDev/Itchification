@@ -1,6 +1,7 @@
 # coding=utf8
 import sys
 import os
+from time import sleep
 import requests
 
 from PySide2 import QtCore, QtGui
@@ -18,32 +19,10 @@ def main():
     app = QApplication([])
     interceptor = WebEngineUrlRequestInterceptor()
     QWebEngineProfile.defaultProfile().setUrlRequestInterceptor(interceptor)
-
     twitch = Twitch()
-    if not twitch.check_auth():
-        print('no auth')
-        twitch.authenticate()
-    else:
-        print('auth babby')
-
-    class Authenticator(QWidget):
-        def __init__(self):
-            super().__init__()
-            layout = QVBoxLayout()
-            self.label = QLabel("Another Window")
-            layout.addWidget(self.label)
-            self.setLayout(layout)
-            twitch = Twitch() 
-            if not twitch.check_auth():
-                print('no auth')
-                twitch.authenticate()
-            else:
-                print('auth babby')
-        
-
 
     class MainWindow(QMainWindow, QtCore.QObject):
-        twitch = Twitch()
+        global twitch
         list_view = QListView(
             editTriggers=QAbstractItemView.NoEditTriggers
         )
@@ -55,36 +34,35 @@ def main():
             with open(stylesheet_path, 'r') as f:
                 self.setStyleSheet(f.read())
             self.setWindowTitle("Itchification")
-            if self.twitch.check_auth(): # need to reverse this logic
-                self.twitch.get_followed()
-                self.twitch.siggy.connect(self._my_slot)
-                model = QStandardItemModel(self.list_view)
-                followed_list = self.twitch.followed
-                for r in followed_list:
-                    image_file = 'thumbnails/' + r['display_name'] + '.jpg'
-                    print(QtCore.QFile.exists(image_file))
-                    if not QtCore.QFile.exists(image_file):
-                        with open(image_file, 'wb') as g:
-                            g.write(requests.get(r["profile_image_url"]).content)
-
-                    channel_url = 'https://twitch.tv/' + r['login']
-                    it = FollowedItem(title=r['display_name'], description=r['description'], icon=QtGui.QIcon(image_file),url=channel_url)
-                    model.appendRow(it)
-
-                self.twitch.get_live_streams()
-                self.list_view.setSpacing(5)
-                self.list_view.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
-                self.list_view.setItemDelegate(StyledItemDelegate(self.list_view))
-                self.list_view.setModel(model)
             
-                layout = QVBoxLayout()
-                layout.addWidget(self.list_view)
-                widget = QWidget()
-                widget.setLayout(layout)
-                self.setCentralWidget(widget)
-                self.setMinimumSize(300, 800)
-            else:
-                self.twitch.authenticate()
+            twitch.get_followed()
+            twitch.siggy.connect(self._my_slot)
+            model = QStandardItemModel(self.list_view)
+            followed_list = twitch.followed
+            followed_list.sort(key=lambda l: (-l['live'],l['display_name'].casefold())) # sort by live status
+            
+            for r in followed_list:
+                image_file = 'thumbnails/' + r['display_name'] + '.jpg'
+                print(QtCore.QFile.exists(image_file))
+                if not QtCore.QFile.exists(image_file):
+                    with open(image_file, 'wb') as g:
+                        g.write(requests.get(r["profile_image_url"]).content)
+
+                channel_url = 'https://twitch.tv/' + r['login']
+                it = FollowedItem(title=r['display_name'], description=r['description'], icon=QtGui.QIcon(image_file),url=channel_url, live=r["live"])
+                model.appendRow(it)
+
+            self.list_view.setSpacing(5)
+            self.list_view.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
+            self.list_view.setItemDelegate(StyledItemDelegate(self.list_view))
+            self.list_view.setModel(model)
+        
+            layout = QVBoxLayout()
+            layout.addWidget(self.list_view)
+            widget = QWidget()
+            widget.setLayout(layout)
+            self.setCentralWidget(widget)
+            self.setMinimumSize(300, 800)
 
         @QtCore.Slot(QtCore.QModelIndex)
         def on_item_changed(self, index):
@@ -100,10 +78,20 @@ def main():
         def _my_slot(self):
             print('new live streamer from main.py')
 
-    # window = MainWindow()
-    # window.show()
-    # starter = Authenticator()
-    # starter.show()
+    if not twitch.check_auth():
+        print('no auth')
+        twitch.authenticate()
+        sleep(5) # need to sort out the race condition
+        print(twitch.twitch_token)
+        # del twitch.browser
+        # sleep(5)
+        # window = MainWindow()
+        # window.show()
+    else:
+        print('we have auth baby')
+        window = MainWindow()
+        window.show()
+
     app.exec_()
 
 

@@ -47,6 +47,7 @@ class Twitch(QObject):
                             "&redirect_uri=http://localhost&response_type=token+id_token&scope=openid "
                             "user:read:follows"))
         self.browser.show()
+        # self.browser
 
     def check_auth(self):
         if not self.twitch_token: 
@@ -65,8 +66,9 @@ class Twitch(QObject):
     def save_token(self,token):
         self.twitch_token = token
         self.dbconn.insert_token(token)
-        QMessageBox.information(self, "Info", "This is Information")
         self._notify_authenticated()
+        # del self.browser
+        # self.browser.hide()
 
     def get_followed(self):
         
@@ -82,8 +84,21 @@ class Twitch(QObject):
             "users?id=" + query_string).json()["data"]
 
         self.dbconn.insert_followed(self._followed)
+        # hold a temporary value for live status
+        for i in self.followed:
+            i["live"] = 0
 
-    def get_live_streams(self):
+        self._get_live_streams()
+        # print(self._followed)
+        if self._live:
+            for l in self._live:
+                for f in self._followed:
+                    if f["id"] == l["user_id"]:
+                        f["live"] = 1
+                        print(f["display_name"])
+
+
+    def _get_live_streams(self):
         live_streams = self.__api_request("streams/followed?user_id=" + self.user_id).json()["data"]
         if not live_streams:
             self._live.clear()

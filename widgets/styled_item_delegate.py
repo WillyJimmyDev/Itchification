@@ -1,5 +1,5 @@
 from PySide2 import QtCore, QtGui, QtWidgets, os
-from config.config import TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE, URL_ROLE
+from config.config import LIVE_ROLE, TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE, URL_ROLE
 
 class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
 
@@ -11,9 +11,11 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         title = index.data(TITLE_ROLE)
         description = index.data(DESCRIPTION_ROLE)
         icon = index.data(ICON_ROLE)
-        # url = index.data(URL_ROLE)
+        live_status = index.data(LIVE_ROLE)
+        
 
         mode = QtGui.QIcon.Normal
+
         # if not (option.state & QtWidgets.QStyle.State_Enabled):
         #     mode = QtGui.QIcon.Disabled
         # elif option.state & QtWidgets.QStyle.State_Selected:
@@ -31,7 +33,11 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         )
 
         titleFont = QtGui.QFont(option.font)
-        titleFont.setPixelSize(16)
+        print(live_status)
+        if live_status == 1:
+            titleFont.setPixelSize(24)
+        else:
+            titleFont.setPixelSize(16)
         fm = QtGui.QFontMetrics(titleFont)
         titleRect = QtCore.QRect(option.rect)
         titleRect.setLeft(iconRect.right() + 10)
