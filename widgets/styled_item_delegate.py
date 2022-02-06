@@ -26,28 +26,34 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
             if option.state & QtWidgets.QStyle.State_Open
             else QtGui.QIcon.Off
         )
+
+        # the icon
         iconRect = QtCore.QRect(option.rect)
         iconRect.setSize(QtCore.QSize(60, 60))
         icon.paint(
             painter, iconRect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, mode, state
         )
 
-        titleFont = QtGui.QFont(option.font)
-        print(live_status)
-        if live_status == 1:
-            titleFont.setPixelSize(24)
-        else:
-            titleFont.setPixelSize(16)
-        fm = QtGui.QFontMetrics(titleFont)
-        titleRect = QtCore.QRect(option.rect)
-        titleRect.setLeft(iconRect.right() + 10)
-        titleRect.setHeight(fm.height())
+        
+        # print(live_status)
+        # if live_status == 1:
+        #     titleFont.setPixelSize(24)
+        # else:
 
+        # color of the font
         color = (
             option.palette.color(QtGui.QPalette.BrightText)
             if option.state & QtWidgets.QStyle.State_Selected
             else option.palette.color(QtGui.QPalette.WindowText)
         )
+
+        # title font
+        titleFont = QtGui.QFont(option.font)
+        titleFont.setPixelSize(16)
+        fm = QtGui.QFontMetrics(titleFont)
+        titleRect = QtCore.QRect(option.rect)
+        titleRect.setLeft(iconRect.right() + 10)
+        titleRect.setHeight(fm.height())
         
         painter.save()
         painter.setFont(titleFont)
@@ -56,21 +62,36 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.setPen(pen)
         painter.drawText(titleRect, title)
         painter.restore()
+        
 
-        descriptionFont = QtGui.QFont(option.font)
-        descriptionFont.setPixelSize(14)
-        fm = QtGui.QFontMetrics(descriptionFont)
-        descriptionRect = QtCore.QRect(option.rect)
-        descriptionRect.setTopLeft(titleRect.bottomLeft())
-        descriptionRect.setHeight(fm.height())
+        # live_icon = QtCore.QRect(option.rect)
+        # live_icon.setRight(titleRect.right() - 20)
+        # live_icon.setHeight(30)
 
         painter.save()
-        painter.setFont(descriptionFont)
         pen = painter.pen()
-        pen.setColor(color)
+        painter.setBrush(QtCore.Qt.red)
+        pen.setColor(QtCore.Qt.red)
         painter.setPen(pen)
-        painter.drawText(
-            descriptionRect,
-            fm.elidedText(description, QtCore.Qt.ElideRight, descriptionRect.width()),
-        )
+        painter.drawEllipse(QtCore.QRect(126.5, 10, 8, 8)) 
         painter.restore()
+
+
+        # description font
+        # descriptionFont = QtGui.QFont(option.font)
+        # descriptionFont.setPixelSize(14)
+        # fm = QtGui.QFontMetrics(descriptionFont)
+        # descriptionRect = QtCore.QRect(option.rect)
+        # descriptionRect.setTopLeft(titleRect.bottomLeft())
+        # descriptionRect.setHeight(fm.height())
+
+        # painter.save()
+        # painter.setFont(descriptionFont)
+        # pen = painter.pen()
+        # pen.setColor(color)
+        # painter.setPen(pen)
+        # painter.drawText(
+        #     descriptionRect,
+        #     fm.elidedText(description, QtCore.Qt.ElideRight, descriptionRect.width()),
+        # )
+        # painter.restore()
