@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, Q
 from PySide2.QtGui import QStandardItemModel
 from twitch import Twitch, WebEngineUrlRequestInterceptor
 from PySide2.QtWebEngineWidgets import QWebEngineProfile
-from PySide2.QtCore import Slot
+from PySide2.QtCore import Slot, QTimer
 
 from widgets.followed_item import FollowedItem
 from widgets.styled_item_delegate import StyledItemDelegate
@@ -20,6 +20,9 @@ def main():
     interceptor = WebEngineUrlRequestInterceptor()
     QWebEngineProfile.defaultProfile().setUrlRequestInterceptor(interceptor)
     twitch = Twitch()
+    timer = QTimer()
+    timer.timeout.connect(twitch.get_followed)
+    timer.start(10000)
 
     class MainWindow(QMainWindow, QtCore.QObject):
         global twitch
@@ -37,10 +40,12 @@ def main():
             
             twitch.get_followed()
             twitch.siggy.connect(self._my_slot)
-            model = QStandardItemModel(self.list_view)
+            self.model = QStandardItemModel(self.list_view)
+            # self.model.setData()
             followed_list = twitch.followed
             followed_list.sort(key=lambda l: (-l['live'],l['display_name'].casefold())) # sort by live status
             
+            # needs to be in a callable function to run on signal from timer timeout
             for r in followed_list:
                 image_file = 'thumbnails/' + r['display_name'] + '.jpg'
                 print(QtCore.QFile.exists(image_file))
@@ -50,12 +55,12 @@ def main():
 
                 channel_url = 'https://twitch.tv/' + r['login']
                 it = FollowedItem(title=r['display_name'], description=r['description'], icon=QtGui.QIcon(image_file),url=channel_url, live=r["live"])
-                model.appendRow(it)
+                self.model.appendRow(it)
 
-            self.list_view.setSpacing(5)
+            self.list_view.setSpacing(1)
             self.list_view.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
             self.list_view.setItemDelegate(StyledItemDelegate(self.list_view))
-            self.list_view.setModel(model)
+            self.list_view.setModel(self.model)
         
             layout = QVBoxLayout()
             layout.addWidget(self.list_view)
@@ -74,9 +79,10 @@ def main():
                 QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
             print("clicked baby:", it.title, it.description,it.url)
 
-        @Slot()
+        @QtCore.Slot()
         def _my_slot(self):
-            print('new live streamer from main.py')
+            print('updating the model hopefully')
+            # self.list_view.setModel(self.model)
 
     if not twitch.check_auth():
         print('no auth')

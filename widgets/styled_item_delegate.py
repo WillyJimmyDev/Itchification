@@ -34,12 +34,6 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
             painter, iconRect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, mode, state
         )
 
-        
-        # print(live_status)
-        # if live_status == 1:
-        #     titleFont.setPixelSize(24)
-        # else:
-
         # color of the font
         color = (
             option.palette.color(QtGui.QPalette.BrightText)
@@ -64,34 +58,33 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.restore()
         
 
-        # live_icon = QtCore.QRect(option.rect)
-        # live_icon.setRight(titleRect.right() - 20)
-        # live_icon.setHeight(30)
+        if live_status == 1:
+            live_icon = QtCore.QRect(option.rect.right() - 12,titleRect.top() + 3,10,10)
 
-        painter.save()
-        pen = painter.pen()
-        painter.setBrush(QtCore.Qt.red)
-        pen.setColor(QtCore.Qt.red)
-        painter.setPen(pen)
-        painter.drawEllipse(QtCore.QRect(126.5, 10, 8, 8)) 
-        painter.restore()
+            painter.save()
+            pen = painter.pen()
+            painter.setBrush(QtCore.Qt.red)
+            pen.setColor(QtCore.Qt.red)
+            painter.setPen(pen)
+            painter.drawEllipse(live_icon)
+            painter.restore()
 
 
         # description font
-        # descriptionFont = QtGui.QFont(option.font)
-        # descriptionFont.setPixelSize(14)
-        # fm = QtGui.QFontMetrics(descriptionFont)
-        # descriptionRect = QtCore.QRect(option.rect)
-        # descriptionRect.setTopLeft(titleRect.bottomLeft())
-        # descriptionRect.setHeight(fm.height())
+        descriptionFont = QtGui.QFont(option.font)
+        descriptionFont.setPixelSize(14)
+        fm = QtGui.QFontMetrics(descriptionFont)
+        descriptionRect = QtCore.QRect(option.rect)
+        descriptionRect.setTopLeft(titleRect.bottomLeft())
+        descriptionRect.setHeight(fm.height())
 
-        # painter.save()
-        # painter.setFont(descriptionFont)
-        # pen = painter.pen()
-        # pen.setColor(color)
-        # painter.setPen(pen)
-        # painter.drawText(
-        #     descriptionRect,
-        #     fm.elidedText(description, QtCore.Qt.ElideRight, descriptionRect.width()),
-        # )
-        # painter.restore()
+        painter.save()
+        painter.setFont(descriptionFont)
+        pen = painter.pen()
+        pen.setColor(color)
+        painter.setPen(pen)
+        painter.drawText(
+            descriptionRect,
+            fm.elidedText(description, QtCore.Qt.ElideRight, descriptionRect.width()),
+        )
+        painter.restore()

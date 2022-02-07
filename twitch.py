@@ -1,6 +1,6 @@
 from PySide2.QtWebEngineWidgets import QWebEngineView
 from PySide2.QtWebEngineCore import QWebEngineUrlRequestInterceptor
-from PySide2.QtCore import QUrl, Signal, QObject, Slot
+from PySide2.QtCore import QUrl, Signal, QObject, Slot,QTimer
 from PySide2.QtWidgets import QMessageBox
 from urllib.parse import urlparse
 import requests
@@ -47,7 +47,6 @@ class Twitch(QObject):
                             "&redirect_uri=http://localhost&response_type=token+id_token&scope=openid "
                             "user:read:follows"))
         self.browser.show()
-        # self.browser
 
     def check_auth(self):
         if not self.twitch_token: 
@@ -67,11 +66,9 @@ class Twitch(QObject):
         self.twitch_token = token
         self.dbconn.insert_token(token)
         self._notify_authenticated()
-        # del self.browser
-        # self.browser.hide()
 
     def get_followed(self):
-        
+        print('called get_followed')
         request = self.__api_request('users')
         self.user_id = request.json()['data'][0]['id']
         followed = self.__api_request("users/follows?from_id=" + self.user_id + "&first=100")
@@ -84,18 +81,17 @@ class Twitch(QObject):
             "users?id=" + query_string).json()["data"]
 
         self.dbconn.insert_followed(self._followed)
-        # hold a temporary value for live status
+        # hold a temporary value for live status initailly set to 0
         for i in self.followed:
             i["live"] = 0
 
         self._get_live_streams()
-        # print(self._followed)
         if self._live:
             for l in self._live:
                 for f in self._followed:
                     if f["id"] == l["user_id"]:
                         f["live"] = 1
-                        print(f["display_name"])
+                        f['description'] = l['title']
 
 
     def _get_live_streams(self):
@@ -113,9 +109,9 @@ class Twitch(QObject):
                 return
             for i in live_streams:
                 if i not in self._live:
-                    self.siggy.emit()
                     self._live.append(i)
-                    self._notify_live(i["user_name"],i["title"])                           
+                    self._notify_live(i["user_name"],i["title"])
+                    self.siggy.emit() # should call when new streamer goes live                          
 
     def _notify_live(self, username, title):
         item = "org.freedesktop.Notifications"
