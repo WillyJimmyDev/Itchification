@@ -37,23 +37,22 @@ def main():
             with open(stylesheet_path, 'r') as f:
                 self.setStyleSheet(f.read())
             self.setWindowTitle("Itchification")
-            
             twitch.get_followed()
             twitch.siggy.connect(self._my_slot)
             self.model = QStandardItemModel(self.list_view)
             # self.model.setData()
             followed_list = twitch.followed
             followed_list.sort(key=lambda l: (-l['live'],l['display_name'].casefold())) # sort by live status
-            
+
             # needs to be in a callable function to run on signal from timer timeout
             for r in followed_list:
-                image_file = 'thumbnails/' + r['display_name'] + '.jpg'
+                image_file = f'thumbnails/{r["display_name"]}.jpg'
                 print(QtCore.QFile.exists(image_file))
                 if not QtCore.QFile.exists(image_file):
                     with open(image_file, 'wb') as g:
                         g.write(requests.get(r["profile_image_url"]).content)
 
-                channel_url = 'https://twitch.tv/' + r['login']
+                channel_url = f'https://twitch.tv/{r["login"]}'
                 it = FollowedItem(title=r['display_name'], description=r['description'], icon=QtGui.QIcon(image_file),url=channel_url, live=r["live"])
                 self.model.appendRow(it)
 
@@ -61,7 +60,7 @@ def main():
             self.list_view.activated.connect(self.on_item_changed)  # .activated is sent when doubleclicked or enter key pressed
             self.list_view.setItemDelegate(StyledItemDelegate(self.list_view))
             self.list_view.setModel(self.model)
-        
+
             layout = QVBoxLayout()
             layout.addWidget(self.list_view)
             widget = QWidget()
@@ -79,9 +78,10 @@ def main():
                 QtGui.QMessageBox.warning(None, 'Open Url', 'Could not open url')
             print("clicked baby:", it.title, it.description,it.url)
 
-        @QtCore.Slot()
-        def _my_slot(self):
+        @QtCore.Slot(object)
+        def _my_slot(self,values):
             print('updating the model hopefully')
+            print(values)
             # self.list_view.setModel(self.model)
 
     if not twitch.check_auth():

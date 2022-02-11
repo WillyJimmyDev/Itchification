@@ -7,6 +7,7 @@ import requests
 from db.database import ItchificationDB
 from config.config import TWITCH_CLIENT_ID
 import dbus
+from deepdiff import DeepDiff
 
 
 class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
@@ -25,7 +26,7 @@ class WebEngineUrlRequestInterceptor(QWebEngineUrlRequestInterceptor):
 
 
 class Twitch(QObject):
-    siggy = Signal()
+    siggy = Signal(object)
 
     def __init__(self):
         super().__init__()
@@ -38,29 +39,42 @@ class Twitch(QObject):
             self.authenticate()
         self._followed = []
         self._live = []
-        self.siggy.connect(self._my_slot)
+        # self.siggy.connect(self._my_slot)
 
     # load a web view for Twitch auth flow.
     # The WebEngineUrlRequestInterceptor reads the token from the auth flow and inserts it in the db
     def authenticate(self):
-        self.browser.load(QUrl("https://id.twitch.tv/oauth2/authorize?client_id=" + self.twitch_client_id +
-                            "&redirect_uri=http://localhost&response_type=token+id_token&scope=openid "
-                            "user:read:follows"))
+        self.browser.load(
+            QUrl(
+                (
+                    f'https://id.twitch.tv/oauth2/authorize?client_id={self.twitch_client_id}'
+                    + "&redirect_uri=http://localhost&response_type=token+id_token&scope=openid "
+                    "user:read:follows"
+                )
+            )
+        )
+
         self.browser.show()
 
     def check_auth(self):
         if not self.twitch_token: 
             return False
         url = "https://id.twitch.tv/oauth2/validate"
-        headers = {"Authorization": "Bearer " + self.twitch_token}
+        headers = {"Authorization": f'Bearer {self.twitch_token}'}
         r = requests.get(url, headers=headers)
         return r.status_code == 200
 
     def __api_request(self, endpoint):
-        url = "https://api.twitch.tv/helix/" + endpoint
-        headers = {"Client-ID": self.twitch_client_id,
-            "Authorization": "Bearer " + self.twitch_token}
-        return requests.get(url, headers=headers)
+        url = f'https://api.twitch.tv/helix/{endpoint}'
+        headers = {
+            "Client-ID": self.twitch_client_id,
+            "Authorization": f'Bearer {self.twitch_token}',
+        }
+
+        r = requests.get(url, headers=headers)
+        if r.status_code == 200:
+            return r
+        return False
 
     def save_token(self,token):
         self.twitch_token = token
@@ -71,14 +85,16 @@ class Twitch(QObject):
         print('called get_followed')
         request = self.__api_request('users')
         self.user_id = request.json()['data'][0]['id']
-        followed = self.__api_request("users/follows?from_id=" + self.user_id + "&first=100")
+        followed = self.__api_request(
+            f'users/follows?from_id={self.user_id}&first=100'
+        )
+
         followed_list_ids = [f['to_id'] for f in followed.json()['data']]
         self.populate_followed_info(followed_list_ids)
 
     def populate_followed_info(self, followed_list):
         query_string = "&id=".join(followed_list)
-        self._followed = self.__api_request(
-            "users?id=" + query_string).json()["data"]
+        self._followed = self.__api_request(f'users?id={query_string}').json()["data"]
 
         self.dbconn.insert_followed(self._followed)
         # hold a temporary value for live status initailly set to 0
@@ -95,23 +111,36 @@ class Twitch(QObject):
 
 
     def _get_live_streams(self):
-        live_streams = self.__api_request("streams/followed?user_id=" + self.user_id).json()["data"]
+        live_streams = self.__api_request(
+            f'streams/followed?user_id={self.user_id}'
+        ).json()["data"]
+
+
         if not live_streams:
             self._live.clear()
             return
         if not self._live: # all live streamers are new
+            print('first run loading live streams')
             self._live = live_streams
-            self.siggy.emit()
+            self.siggy.emit(['1','2','3']) # doesn't get called on first run why?
             for i in self._live:
                 self._notify_live(i["user_name"],i["title"])
-        else:
-            if self._live == live_streams: # nothing has changed, move on
-                return
-            for i in live_streams:
-                if i not in self._live:
-                    self._live.append(i)
-                    self._notify_live(i["user_name"],i["title"])
-                    self.siggy.emit() # should call when new streamer goes live                          
+            return
+        # else:
+        #     self._live.sort(key=lambda x: x['user_id'], reverse=False)
+        #     live_streams.sort(key=lambda x: x['user_id'], reverse=False)
+        #     # print(self._live)
+        #     # print(live_streams)
+        #     # ddiff = DeepDiff(self._live, live_streams, exclude_paths={"root['ingredients']"})
+        #     # print(ddiff)
+        #     print(self._live == live_streams)
+        #     if self._live == live_streams: # nothing has changed, move on
+        #         return
+        for i in live_streams:
+            if i not in self._live:
+                self._live.append(i)
+                self._notify_live(i["user_name"],i["title"])
+                self.siggy.emit(['4','5','6']) # should call when new streamer goes live                          
 
     def _notify_live(self, username, title):
         item = "org.freedesktop.Notifications"
@@ -120,8 +149,15 @@ class Twitch(QObject):
         dbus.SessionBus().get_object(item, "/"+item.replace(".", "/")), item)
 
         notify_intf.Notify(
-        "", 0, "", username + " Has Just Gone Live!", title,
-        [], {"urgency": 1}, 10000)
+            "",
+            0,
+            "",
+            f'{username} Has Just Gone Live!',
+            title,
+            [],
+            {"urgency": 1},
+            10000,
+        )
     
     def _notify_authenticated(self):
         item = "org.freedesktop.Notifications"
@@ -133,9 +169,9 @@ class Twitch(QObject):
         "", 0, "", "You are successfully authenticated with Twitch", "Authentication Successful",
         [], {"urgency": 1}, 10000)
 
-    @Slot()
-    def _my_slot(self):
-        print('new live streamer')
+    # @Slot()
+    # def _my_slot(self):
+    #     print('new live streamer')
 
 
     @property
