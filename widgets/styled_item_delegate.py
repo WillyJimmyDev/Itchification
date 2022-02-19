@@ -12,7 +12,7 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         description = index.data(DESCRIPTION_ROLE)
         icon = index.data(ICON_ROLE)
         live_status = index.data(LIVE_ROLE)
-        
+
 
         mode = QtGui.QIcon.Normal
 
@@ -48,7 +48,7 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         titleRect = QtCore.QRect(option.rect)
         titleRect.setLeft(iconRect.right() + 10)
         titleRect.setHeight(fm.height())
-        
+
         painter.save()
         painter.setFont(titleFont)
         pen = painter.pen()
@@ -56,19 +56,10 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.setPen(pen)
         painter.drawText(titleRect, title)
         painter.restore()
-        
+
 
         if live_status == 1:
-            live_icon = QtCore.QRect(option.rect.right() - 12,titleRect.top() + 3,10,10)
-
-            painter.save()
-            pen = painter.pen()
-            painter.setBrush(QtCore.Qt.red)
-            pen.setColor(QtCore.Qt.red)
-            painter.setPen(pen)
-            painter.drawEllipse(live_icon)
-            painter.restore()
-
+            self._draw_live_indicator(option, titleRect, painter)
 
         # description font
         descriptionFont = QtGui.QFont(option.font)
@@ -88,3 +79,17 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
             fm.elidedText(description, QtCore.Qt.ElideRight, descriptionRect.width()),
         )
         painter.restore()
+
+    def _draw_live_indicator(self, option, titleRect, painter):
+        live_icon = QtCore.QRect(option.rect.right() - 12,titleRect.top() + 3,10,10)
+
+        painter.save()
+        result = painter.pen()
+        painter.setBrush(QtCore.Qt.red)
+        result.setColor(QtCore.Qt.red)
+        painter.setPen(result)
+        painter.drawEllipse(live_icon)
+        painter.restore()
+
+
+        return result
