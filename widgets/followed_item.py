@@ -1,8 +1,9 @@
 from PySide2 import QtGui
 from config.config import TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE, URL_ROLE, LIVE_ROLE
 
+
 class FollowedItem(QtGui.QStandardItem):
-    def __init__(self, title="", description="", icon=QtGui.QIcon(),url = "", live = 0):
+    def __init__(self, title="", description="", icon=QtGui.QIcon(), url="", live=0):
         super(FollowedItem, self).__init__()
         self.title = title
         self.description = description

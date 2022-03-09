@@ -1,8 +1,8 @@
 from PySide2 import QtCore, QtGui, QtWidgets, os
 from config.config import LIVE_ROLE, TITLE_ROLE, DESCRIPTION_ROLE, ICON_ROLE, URL_ROLE
 
-class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
 
+class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
     def sizeHint(self, option, index):
         return QtCore.QSize(60, 60)
 
@@ -12,7 +12,6 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         description = index.data(DESCRIPTION_ROLE)
         icon = index.data(ICON_ROLE)
         live_status = index.data(LIVE_ROLE)
-
 
         mode = QtGui.QIcon.Normal
 
@@ -57,7 +56,6 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawText(titleRect, title)
         painter.restore()
 
-
         if live_status == 1:
             self._draw_live_indicator(option, titleRect, painter)
 
@@ -81,7 +79,7 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.restore()
 
     def _draw_live_indicator(self, option, titleRect, painter):
-        live_icon = QtCore.QRect(option.rect.right() - 12,titleRect.top() + 3,10,10)
+        live_icon = QtCore.QRect(option.rect.right() - 12, titleRect.top() + 3, 10, 10)
 
         painter.save()
         result = painter.pen()
@@ -90,6 +88,5 @@ class StyledItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.setPen(result)
         painter.drawEllipse(live_icon)
         painter.restore()
-
 
         return result
